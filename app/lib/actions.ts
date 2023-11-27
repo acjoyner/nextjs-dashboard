@@ -3,6 +3,23 @@ import { z } from 'zod';
 import { sql } from '@vercel/postgres';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { signIn } from '@/auth';
+ 
+// ...
+ 
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', Object.fromEntries(formData));
+  } catch (error) {
+    if ((error as Error).message.includes('CredentialsSignin')) {
+      return 'CredentialsSignin';
+    }
+    throw error;
+  }
+}
 
 const FormSchema = z.object({
   id: z.string(),
@@ -79,7 +96,7 @@ export async function updateInvoice(id: string, prevState: State, formData: Form
 
   const { customerId, amount, status} = validatedFields.data;
   const amountInCents = amount * 100;
-  
+
   try {
     await sql`
     UPDATE invoices
@@ -108,3 +125,5 @@ export async function deleteInvoice(id: string) {
     };
   }
 }
+
+
